@@ -1,0 +1,703 @@
+---
+title: |
+  <center> Hypothesis Testing </center>  
+  <center> Chi Square and ANOVA tests </center>
+author: "Hai Vu"
+date: '`r format(Sys.time(),"%d %B, %Y")`'
+output: 
+  pdf_document:
+    latex_engine: xelatex
+  toc: true
+  toc_depth: 2
+indent: true
+header-includes:
+  - \usepackage{indentfirst}
+  - \usepackage{ragged2e}
+  - \usepackage[labelformat=empty]{caption}
+---
+
+```{r message=FALSE, warning=FALSE}
+# Libraries import
+library(dplyr)
+library(knitr)
+library(tidyverse)
+library(tibble)
+library(RColorBrewer)
+library(xlsx)
+library(ggplot2)
+library(kableExtra)
+library(formatR)
+library(DescTools)
+library(ggpubr)
+library(psych)
+
+```
+
+# I. INTRODUCTION SECTION
+
+This project aims to apply my understanding of different Chi-square and ANOVA tests to solve a few problems. I will conduct several tests using one or more of the following methods:
+
+  + Test the goodness of fit of a distribution using Chi-square
+  + Test two variables for independence using Chi-square
+  + Test homogeneity of proportions using Chi-square
+  + One-way ANOVA to see if there is a significant difference between pairs of means
+  + Two-way ANOVA to see if there is a significant difference in the main effects or the interaction between variables
+
+# II. ANALYSIS SECTION
+
+## Task 1 (Blood Types)
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE, tidy.opts = list(width.cutoff = 80), tidy = TRUE)
+knitr::opts_chunk$set(echo = T, tidy = F)
+```
+```{r message=FALSE, warning=FALSE}
+alpha1 <- 0.10
+
+# Expected:
+exp_a <- 0.20 # Type A
+exp_b <- 0.28 # Type B
+exp_o <- 0.36 # Type O
+exp_ab <- 0.16 # Type AB
+
+# Observed:
+obs_a <- 12
+obs_b <- 8
+obs_o <- 24
+obs_ab <- 6
+
+# Data table:
+expected1 <- c(exp_a,exp_b,exp_o,exp_ab)
+observed1 <- c(obs_a,obs_b,obs_o,obs_ab)
+
+df_test1 <- data.frame(expected1,observed1)
+
+colnames(df_test1) <- c("Expected Values","Observed Values (n=50)")
+rownames(df_test1) <- c("Type A","Type B","Type O","Type AB")
+knitr::kable(df_test1, "simple",
+             caption="Table 1.1. Blood types distribution") %>%
+  kable_styling(position = "center")
+```
+
+1. Step 1. State the hypothesis and identify the claim:
+  + Null Hypothesis ($H_0$): ${𝑃_A=0.20, 𝑃_B=0.28, 𝑃_O=0.36, P_{AB}=0.16}$  
+  + Alternative Hypothesis ($H_1$): ${𝑃_A\neq0.20 \text{ or } 𝑃_B\neq0.28 \text{ or } 𝑃_O\neq0.36 \text{ or } 𝑃_{AB}\neq0.16}$, or that the blood type distribution is not similar to the stated distribution in the null hypothesis
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+At $\alpha$ = 0.10 and degree of freedom = 3, the critical value is 6.251 based on the Chi-Square distribution table. We begin performing the chi-square test:
+```{r message=FALSE, warning=FALSE}
+test1 <- chisq.test(observed1, p=expected1, correct=F)
+test1
+```
+
+The following graph helps visualize the differences between the observed and expected values:
+```{r message=FALSE, warning=FALSE, fig.align="center"}
+# Observed vs Expected values:
+par(mai=c(1,1,1,1))
+
+plot(expected1,col="blue", type="o", pch=16, ylim=c(0,1), xaxt="n",
+     main="Blood Type distribution",
+     sub=paste("Figure 1.1","\n"),
+     ylab="Proportion",xlab="",cex.axis=0.8,cex.sub=0.9)
+lines(observed1/sum(observed1),col="red",type="o", pch=16)
+axis(1,at=c(1,2,3,4),
+     labels=c("Type A","Type B","Type O","Type AB"),cex.axis=0.8)
+legend("topright",c("Expected","Observed"),
+       lty=1,col=c("blue","red"),pch=16,cex=0.8)
+
+```
+
+3. Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r test1$p.value``) is greater than $\alpha$ (``r alpha1``), we fail to reject the null hypothesis and conclude that the blood type distribution observed from the random sample is not different from the blood type distribution found in the general population.
+
+## Task 2 (On-time performance by airlines)
+
+```{r message=FALSE, warning=FALSE}
+alpha2 <- 0.05
+
+# Expected:
+exp_ontime <- 0.708 # On time
+exp_nas <- 0.082 # National Aviation System delay
+exp_late <- 0.09 # Arriving late
+exp_other <- 0.12 # Other reasons
+
+# Observed:
+obs_ontime <- 125
+obs_nas <- 10
+obs_late <- 25
+obs_other <- 40
+
+# Data table:
+expected2 <- c(exp_ontime,exp_nas,exp_late,exp_other)
+observed2 <- c(obs_ontime,obs_nas,obs_late,obs_other)
+
+df_test2 <- data.frame(expected2,observed2)
+
+colnames(df_test2) <- c("Expected Values","Observed Values (n=200)")
+rownames(df_test2) <- c("On Time","NAS delay","Late","Other reasons")
+knitr::kable(df_test2, "simple", 
+             caption="Table 2.1. Airlines on-time performance distribution") %>%
+  kable_styling(position = "center")
+```
+
+1. Step 1. State the hypothesis and identify the claim:
+  + Null Hypothesis ($H_0$): ${𝑃_{on\_time}=0.708, 𝑃_{nas}=0.082, 𝑃_{late}=0.09, P_{other}=0.12}$  
+  + Alternative Hypothesis ($H_1$): ${𝑃_{on\_time}\neq0.708 \text{ or } 𝑃_{nas}\neq0.082 \text{ or } 𝑃_{late}\neq0.09 \text{ or } P_{other}\neq0.12}$, or that the on-time performance of airlines from the selected sample is not similar to the on-time performance recorded by the Bureau of Transport Statistics
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+At $\alpha$ = 0.05 and degree of freedom = 3, the critical value is 7.815 based on the Chi-Square distribution table. We begin performing the chi-square test:
+```{r message=FALSE, warning=FALSE}
+test2 <- chisq.test(observed2, p=expected2, correct=F)
+test2
+
+```
+
+The following graph helps visualize the differences between the observed and expected values:
+```{r message=FALSE, warning=FALSE, fig.align="center"}
+# Observed vs Expected values:
+par(mai=c(1,1,1,1))
+
+plot(expected2,col="orchid4", type="o", pch=16, ylim=c(0,1), xaxt="n",
+     main="Airlines on-time performance distribution",
+     sub=paste("Figure 2.1","\n"),
+     ylab="Proportion",xlab="",cex.axis=0.8,cex.sub=0.9)
+lines(observed2/sum(observed2),col="royalblue",type="o", pch=16)
+axis(1,at=c(1,2,3,4),
+     labels=c("On Time","NAS delay","Late","Other reasons"),cex.axis=0.8)
+legend("topright",c("Expected","Observed"),
+       lty=1,col=c("orchid4","royalblue"),pch=16,cex=0.8)
+
+```
+
+3. Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r format(test2$p.value,scientific=T)``) is smaller than $\alpha$ (``r alpha2``), we are able to reject the null hypothesis and conclude that the on-time performance of airlines from the selected sample is not similar to the on-time performance recorded by the Bureau of Transport Statistics.
+
+## Task 3 (Ethnicity and movie admissions)
+
+```{r message=FALSE, warning=FALSE}
+alpha3 <- 0.05
+
+Y_2013 <- c(724, 335, 174, 107) # movie admissions in 2013
+Y_2014 <- c(370, 292, 152, 140) # movie admissions in 2014
+
+df_test3 <- data.frame(Y_2013,Y_2014)
+
+colnames(df_test3) <- c(2013,2014)
+rownames(df_test3) <- c("Caucasian","Hispanic","African American","Other")
+knitr::kable(df_test3, "simple",
+             caption="Table 3.1. Ethnicity and Movie Admissions by year") %>%
+  kable_styling(position = "center")
+
+```
+
+1. Step 1. State the hypothesis and identify the claim:
+  + Null Hypothesis ($H_0$): Movie attendance by year is independent of ethnicity 
+  + Alternative Hypothesis ($H_1$): Movie attendance by year is dependent upon ethnicity 
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+At $\alpha$ = 0.05 and degree of freedom = 3, the critical value is 7.815 based on the Chi-Square distribution table. We begin performing the chi-square test:
+
+```{r message=FALSE, warning=FALSE}
+test3 <- chisq.test(df_test3)
+test3
+
+```
+
+3. Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r format(test3$p.value,scientific=T)``) is smaller than $\alpha$ (``r alpha3``), we are able to reject the null hypothesis and conclude that there is enough evidence to support the claim that the movie attendance by year is dependent upon ethnicity.
+
+## Task 4 (Women in the military)
+
+```{r message=FALSE, warning=FALSE}
+alpha4 <- 0.05
+
+army <- c(10791, 62491) # army
+navy <- c(7816,42750) # navy
+marine <- c(932,9525) # marine corps
+airf <- c(11819,54344) # air force
+
+# Data table:
+df_test4 <- data.frame(army,navy,marine,airf)
+
+rownames(df_test4) <- c("Officers","Enlisted")
+colnames(df_test4) <- c("Army","Navy","Marine Corps","Air Force")
+knitr::kable(format(df_test4,big.mark=","), "simple",
+             caption="Table 4.1. Women personnel in the military by rank and branch") %>%
+  kable_styling(position = "center")
+
+```
+
+1. Step 1. State the hypothesis and identify the claim:
+  + Null Hypothesis ($H_0$): Military ranking is independent of military branch for women in the Armed Forces 
+  + Alternative Hypothesis ($H_1$): Military ranking is dependent upon military branch for women in the Armed Forces
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+At $\alpha$ = 0.05 and degree of freedom = 3, the critical value is 7.815 based on the Chi-Square distribution table. We begin performing the chi-square test:
+
+```{r message=FALSE, warning=FALSE}
+test4 <- chisq.test(df_test4)
+test4
+
+```
+
+3. Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r format(test4$p.value,scientific=T)``) is smaller than $\alpha$ (``r alpha4``), we are able to reject the null hypothesis and conclude that there is enough evidence to support the claim that the military ranking is dependent upon the military branch for women in the Armed Forces.
+
+## Task 5 (Sodium contents of foods)
+
+```{r message=FALSE, warning=FALSE}
+alpha5 <- 0.05
+
+cond <- c(270,130,230,180,80,70,200) # condiments
+cereal <- c(260,220,290,290,200,320,140) # cereals
+dessert <- c(100,180,250,250,300,360,300) # desserts
+
+# Data table:
+df_table <- data.frame(cond,cereal,dessert)
+
+colnames(df_table) <- c("Condiments","Cereals","Desserts")
+knitr::kable(df_table, "simple",
+             caption="Table 5.1. Sodium Contents of Foods") %>%
+  kable_styling(position = "center")
+
+```
+
+1. Step 1. State the hypothesis and identify the claim:
+  + Null Hypothesis ($H_0$): The mean sodium contents are similar among all three types of foods
+  + Alternative Hypothesis ($H_1$): At least one type of foods has the mean sodium content that is different from the others 
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+From table 5.1, we have N = 21 and k = 3. Therefore, d.f.N = k-1 = 2 and d.f.D = N-k = 18. Based on the F Distribution Table, the critical value at alpha = 0.05 is 3.5546. We begin performing the one-way ANOVA test:
+
+```{r message=FALSE, warning=FALSE}
+# Data preparation
+df_test5 <- matrix(c(rep("Condiments",7),rep("Cereals",7),rep("Desserts",7),
+                     cond,cereal,dessert),ncol=2)
+df_test5 <- as.data.frame(df_test5)
+names(df_test5) <- c("Food_Types","Sodium_Contents")
+df_test5$Sodium_Contents <- as.numeric(as.character(df_test5$Sodium_Contents))
+
+df_test5
+
+```
+
+```{r message=FALSE, warning=FALSE}
+# Conduct the one-way ANOVA test
+test5.0 <- oneway.test(Sodium_Contents ~ Food_Types, data=df_test5, var.equal=T)
+test5.1 <- aov(Sodium_Contents ~ Food_Types, data=df_test5)
+summary(test5.1)
+
+```
+
+3. Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r round(test5.0$p.value,3)``) is greater than $\alpha$ (``r alpha5``), we fail to reject the null hypothesis and conclude that the mean sodium contents are similar among all three types of foods. Since there isn't any significant differences between the pairs of means, there is no need to conduct the Scheffe test or Tukey test.
+
+```{r message=FALSE, warning=FALSE, fig.align="center"}
+# Distribution of sodium contents of foods
+ggplot(df_test5, aes(x = Food_Types, y = Sodium_Contents, fill = Food_Types)) +
+    labs(title="Sodium content distribution by food types",caption="Figure 5.1") +
+    scale_fill_brewer(palette="Set3") +
+    theme(plot.title=element_text(hjust=0.5),plot.caption=element_text(hjust=0.5,size=11)) +
+    geom_boxplot() +
+    xlab(paste("Food Types","\n")) + ylab("Sodium Contents (mg)") +
+    stat_summary(fun.y="mean", shape=15, color="red") +
+    theme(legend.position = "none")
+
+```
+
+
+## Task 6 (Sales for leading companies)
+
+```{r message=FALSE, warning=FALSE}
+alpha6 <- 0.01
+
+cereal2 <- c(578,320,264,249,237)
+choco <- c(311,106,109,125,173)
+coffee <- c(261,185,302,689,NA)
+
+# Data table:
+df_table2 <- data.frame(cereal2,choco,coffee)
+colnames(df_table2) <- c("Cereal","Chocolate Candy","Coffee")
+knitr::kable(df_table2, "simple",
+             caption="Table 6.1. Sales for Leading Companies (in millions USD)") %>%
+  kable_styling(position = "center")
+
+```
+
+1. Step 1. State the hypothesis and identify the claim:
+  + Null Hypothesis ($H_0$): The average sales are similar among all three types of products
+  + Alternative Hypothesis ($H_1$): At least one type of products generate average sales that is different from the others
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+From table 6.1, we have N = 14 and k = 3. Therefore, d.f.N = k-1 = 2 and d.f.D = N-k = 11. Based on the F Distribution Table, the critical value at alpha = 0.01 is 7.206. We begin performing the one-way ANOVA test:
+
+```{r message=FALSE, warning=FALSE}
+# Data preparation
+coffee2 <- c(261,185,302,689)
+df_test6 <- matrix(c(rep("Cereal",5),rep("Chocolate Candy",5),rep("Coffee",4),
+                     cereal2,choco,coffee2),ncol=2)
+df_test6 <- as.data.frame(df_test6)
+names(df_test6) <- c("Products","Sales")
+df_test6$Sales <- as.numeric(as.character(df_test6$Sales))
+
+df_test6
+
+```
+
+```{r message=FALSE, warning=FALSE}
+# Conduct the one-way ANOVA test
+test6.0 <- oneway.test(Sales ~ Products, data=df_test6, var.equal=T)
+test6.1 <- aov(Sales ~ Products, data=df_test6)
+summary(test6.1)
+
+```
+
+3. Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r round(test6.0$p.value,3)``) is greater than $\alpha$ (``r alpha6``), we fail to reject the null hypothesis and conclude that the average sales are similar among all three types of products. Since there isn't any significant differences between the pairs of means, there is no need to conduct the Scheffe test or Tukey test.
+
+```{r message=FALSE, warning=FALSE, fig.align="center"}
+# Distribution of sodium contents of foods
+ggplot(df_test6, aes(x = Products, y = Sales, fill = Products)) +
+    labs(title="Sales distribution by products (in mUSD)",caption="Figure 6.1") +
+    scale_fill_brewer(palette="Accent") +
+    theme(plot.title=element_text(hjust=0.5),plot.caption=element_text(hjust=0.5,size=11)) +
+    geom_boxplot() +
+    xlab(paste("Products","\n")) + ylab("Sales Amount (mUSD)") +
+    stat_summary(fun.y="mean", shape=15, color="red") +
+    theme(legend.position = "none")
+
+```
+
+## Task 7 (Per-pupil expenditures)
+
+```{r message=FALSE, warning=FALSE}
+alpha7 <- 0.05
+
+east <- c(4946,5953,6202,7243,6113)
+mid <- c(6149,7451,6000,6479,NA)
+west <- c(5282,8605,6528,6911,NA)
+
+# Data table:
+df_table3 <- data.frame(east,mid,west)
+colnames(df_table3) <- c("Eastern third","Middle third","Western third")
+knitr::kable(format(df_table3,big.mark=","), "simple",
+             caption="Table 7.1. Per-Pupil Expenditures") %>%
+  kable_styling(position = "center")
+
+```
+
+1. Step 1. State the hypothesis and identify the claim:
+  + Null Hypothesis ($H_0$): The average expenditures per pupil are similar among all three sections of the country
+  + Alternative Hypothesis ($H_1$): At least one section of the country have different average expenditures per pupil compared to the other sections
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+From table 7.1, we have N = 13 and k = 3. Therefore, d.f.N = k-1 = 2 and d.f.D = N-k = 10. Based on the F Distribution Table, the critical value at alpha = 0.05 is 4.1028. We begin performing the one-way ANOVA test:
+
+```{r message=FALSE, warning=FALSE}
+# Data preparation
+mid2 <- c(6149,7451,6000,6479)
+west2 <- c(5282,8605,6528,6911)
+
+df_test7 <- matrix(c(rep("Eastern",5),rep("Middle",4),rep("Western",4),
+                     east,mid2,west2),ncol=2)
+df_test7 <- as.data.frame(df_test7)
+names(df_test7) <- c("Location","Expenditure_per_Pupil")
+df_test7$Expenditure_per_Pupil <- as.numeric(as.character(df_test7$Expenditure_per_Pupil))
+
+df_test7
+
+```
+
+```{r message=FALSE, warning=FALSE}
+# Conduct the one-way ANOVA test
+test7.0 <- oneway.test(Expenditure_per_Pupil ~ Location, data=df_test7, var.equal=T)
+test7.1 <- aov(Expenditure_per_Pupil ~ Location, data=df_test7)
+summary(test7.1)
+
+```
+
+3. Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r round(test7.0$p.value,3)``) is greater than $\alpha$ (``r alpha7``), we fail to reject the null hypothesis and conclude that the average expenditures per pupil are similar among all three sections of the country. Since there isn't any significant differences between the pairs of means, there is no need to conduct the Scheffe test or Tukey test.
+
+```{r message=FALSE, warning=FALSE, fig.align="center"}
+# Distribution of sodium contents of foods
+ggplot(df_test7, aes(x = Location, y = Expenditure_per_Pupil, fill = Location)) +
+    labs(title="Expenditure per pupil by country section (in USD)",caption="Figure 7.1") +
+    scale_fill_brewer(palette="Pastel2") +
+    theme(plot.title=element_text(hjust=0.5),plot.caption=element_text(hjust=0.5, size=11)) +
+    geom_boxplot() +
+    xlab(paste("Country Section","\n")) + ylab("Expenditure (USD)") +
+    stat_summary(fun.y="mean", shape=15, color="red") +
+    theme(legend.position = "none")
+
+```
+
+## Task 8 (Increasing Plant Growth)
+
+```{r message=FALSE, warning=FALSE}
+alpha8 <- 0.05
+
+fooda_l1 <- c(9.2,9.4,8.9)
+fooda_l2 <- c(8.5,9.2,8.9)
+foodb_l1 <- c(7.1,7.2,8.5)
+foodb_l2 <- c(5.5,5.8,7.6)
+growth <- c(fooda_l1,fooda_l2,foodb_l1,foodb_l2)
+
+# Data preparation
+df_test8 <- matrix(c(rep("Plant food A",6),rep("Plant food B",6),
+            rep("Grow light 1",3),rep("Grow light 2",3),
+            rep("Grow light 1",3),rep("Grow light 2",3),
+            growth),ncol=3)
+
+df_test8 <- as.data.frame(df_test8)
+names(df_test8) <- c("Food_Supplement","Grow_Light","Growth_Length")
+df_test8$Growth_Length <- as.numeric(df_test8$Growth_Length)
+df_test8$Food_Supplement <- as.factor(df_test8$Food_Supplement)
+df_test8$Grow_Light <- as.factor(df_test8$Grow_Light)
+
+# Data table
+knitr::kable(df_test8, "simple",
+             caption="Table 8.1. Plant Growth by Food Supplement & Grow Light (in inches)") %>%
+  kable_styling(position = "center")
+
+```
+```{r message=FALSE, warning=FALSE, fig.align="center"}
+# Distribution of plant growth by groups:
+ggplot(df_test8, aes(x=Food_Supplement, y=Growth_Length, fill=Grow_Light)) + 
+  geom_boxplot() +
+  labs(title="Plant growth distribution by food supplement and grow light",caption="Figure 8.1") +
+  scale_fill_brewer(palette="Pastel1") +
+  theme(plot.title=element_text(hjust=0.5),plot.caption=element_text(hjust=0.5, size=11)) +
+  xlab(paste("Food Supplement","\n")) + ylab("Growth Length (inch)") +
+  stat_summary(fun.y="mean", geom="point",shape=16, color="red",
+               position = position_dodge2(width = 0.75,preserve = "single"))
+```
+1. Step 1. State the hypothesis and identify the claim:
+
+  * The hypothesis for the interaction are ($F_{A\times B}$ test):
+    + Null Hypothesis ($H_0$): There is no interaction effect between type of food supplement used and type of grow light used on the plant growth length
+    + Alternative Hypothesis ($H_1$): There is an interaction effect between type of food supplement used and type of grow light used on the plant growth length
+  * The hypothesis for the food supplement types are ($F_{A}$ test):
+    + Null Hypothesis ($H_0$): There is no difference between the means of plant growth length for two types of food supplement
+    + Alternative Hypothesis ($H_1$): There is a difference between the means of plant growth length for two types of food supplement
+  * The hypothesis for the grow light types are ($F_{B}$ test):
+    + Null Hypothesis ($H_0$): There is no difference between the means of plant growth length for two types of grow light
+    + Alternative Hypothesis ($H_1$): There is a difference between the means of plant growth length for two types of grow light
+
+2. Step 2-3. Find the critical values and compute the test values:
+
+There are 2 types of food supplement and 2 types of grow light, and there are 3 data points in each group. Assume factor A and factor B represent the food supplement types and grow light types, respectively. Thus, we have a=2, b=2 and n=3. From that, we can calculate d.f.D = ab(n-1) = 2*2(3-1) = 8. At alpha = 0.05, we can determine the critical values for each test:
+
+  * For the $F_{A}$ test: We have d.f.N = a-1 = 1, d.f.D = 8. Based on the F Distribution table, $F_{A}$ = 5.3177
+  * For the $F_{B}$ test: We have d.f.N = b-1 = 1, d.f.D = 8. Based on the F Distribution table, $F_{B}$ = 5.3177
+  * For the $F_{A\times B}$ test: We have d.f.N = (a-1)*(b-1) = 1, d.f.D = 8. Based on the F Distribution table, $F_{A\times B}$ = 5.3177
+
+```{r message=FALSE, warning=FALSE}
+# Conduct the two-way ANOVA test
+# F{A*B} test:
+f_ab <- aov(Growth_Length ~ Food_Supplement * Grow_Light,data=df_test8)
+summary(f_ab)
+
+```
+
+After conducting the $F_{A\times B}$ test, we can see that the p-value of Food_Supplement:Grow_Light (0.26482) is greater than our significant level (0.05). Thus, we fail to reject the null hypothesis and conclude that there is no interaction effect between type of food supplement used and type of grow light used on the plant growth length.
+
+```{r message=FALSE, warning=FALSE, fig.align="center"}
+# Interaction plot
+par(mai=c(1,1,1,1))
+interaction.plot(df_test8$Food_Supplement,df_test8$Grow_Light,df_test8$Growth_Length,type="b",
+                 col=c(2:3),leg.bty="o",leg.bg="beige",lwd=2,pch=c(18,24), trace.label="Grow Light",
+                 xlab=paste("Food Supplement","\n"),ylab="Growth Length (inch)",
+                 main="Interaction plot between Food Supplement & Grow Light",
+                 sub=paste("Figure 8.2","\n"),cex.axis=0.8,cex.lab=0.9,cex.sub=0.9)
+
+```
+From the interaction plot above, we can see that the two lines are approximately parallel. This shows that there is no significant interaction between the 2 variables.
+
+```{r message=FALSE, warning=FALSE}
+# Conduct the two-way ANOVA test
+# F{A} and F{B} test:
+f_ab_ind <- aov(Growth_Length ~ Food_Supplement + Grow_Light,data=df_test8)
+summary(f_ab_ind)
+
+```
+
+Since the interaction effect is insignificant, we can continue conducting the independent tests for $F_{A}$ and $F_{B}$. We see that the p-value for Food_Supplement (0.0009) is less than our alpha (0.05), but the p-value for Grow_Light (0.094) is greater than our alpha (0.05). Therefore, we can reject the null hypothesis for the $F_{A}$ test but fail to reject the null hypothesis for the $F_{B}$ test. The conclusions are that there is a difference between the means of plant growth length for two types of food supplement, but there is no difference between the means of plant growth length for two types of grow light.
+
+## Task 9 (On your own)
+
+### Task 9.1 (baseball.csv)
+
+1. Import file into R
+```{r message=FALSE, warning=FALSE}
+df_bb <- read.csv("baseball.csv")
+str(df_bb)
+
+```
+
+2. Perform EDA on the data set
+```{r message=FALSE, warning=FALSE}
+df_bb_num <- select_if(df_bb,is.numeric)
+df_bb_char <- select_if(df_bb,is.character)
+
+# Show descriptive statistics of the numerical values
+num_stats <- describe(df_bb_num)[,c('n','mean','median','sd','min','max')]
+num_stats <- as.data.frame(num_stats)
+num_stats$na_count <- nrow(df_bb) - num_stats$n
+num_stats$mean <- round(num_stats$mean,2)
+num_stats$median <- round(num_stats$median,2)
+num_stats$sd <- round(num_stats$sd,2)
+num_stats$min <- round(num_stats$min,2)
+num_stats$max <- round(num_stats$max,2)
+
+knitr::kable(num_stats, "simple",
+             caption="Table 9.1. Descriptive statistics of the data set numerical values") %>%
+  kable_styling(position = "center")
+```
+
+```{r message=FALSE, warning=FALSE}
+# Show descriptive statistics of the categorical values
+char_uniq <- as.matrix(lengths(lapply(df_bb_char,unique)))
+char_n <- describe(df_bb_char)[,c('n')]
+char_stats <- cbind(char_uniq,char_n)
+colnames(char_stats) <- c("Unique","Total Count")
+
+knitr::kable(char_stats, "simple",
+             caption="Table 9.2. Descriptive statistics of the data set categorical values") %>%
+  kable_styling(position = "center")
+```
+
+```{r message=FALSE, warning=FALSE}
+# Wins by top 5 teams by league
+df_bb_wins <- df_bb[,c("Team","League","W")]
+df_bb_wins1 <-
+  df_bb_wins %>%
+  group_by(Team,League) %>%
+  summarise(total_w=sum(W)) %>%
+  arrange(desc(total_w))
+
+df_bb_wins1 <- head(df_bb_wins1,10) %>% arrange(League)
+
+ggplot(df_bb_wins1, aes(x = League, y = total_w, fill=Team)) +
+  geom_bar(stat="identity",position="dodge") +
+  geom_text(aes(label=total_w), position=position_dodge(width=0.9), vjust=-0.5,size=3) +
+  labs(title="Top 5 teams with the highest games won by league",caption="Figure 9.1") +
+  theme(plot.title=element_text(hjust=0.5),plot.caption=element_text(hjust=0.5, size=11)) +
+  xlab(paste("League","\n")) + ylab("Total Wins")
+
+```
+The baseball data set contains 1232 rows and 15 columns. Within the 15 data fields, there are 13 numerical variables and 2 categorical variables. There are a total of 39 teams in the data set, within which, 19 teams are in the NL league and 20 teams are in the AL league. Table 9.1 and 9.2 shows the descriptive statistics of the variables given in the data set. The bar chart above helps visualize the top 5 performing teams in each league. The 5 teams with the highest wins in AL league are BAL, BOS, CHW, MIN, NYY, and the 5 teams with the highest wins in NL league are CIN, LAD, PHI, SFG, STL.
+
+3. Chi-square goodness-of-fit test
+```{r message=FALSE, warning=FALSE}
+# Data preparation
+df_bb$Decade <- df_bb$Year - (df_bb$Year%%10)
+wins_decade <- df_bb %>%
+  group_by(Decade) %>%
+  summarise(wins=sum(W)) %>%
+  as.tibble()
+wins_decade
+```
+```{r message=FALSE, warning=FALSE}
+alpha9 <- 0.05
+expected9 <- c(1/6,1/6,1/6,1/6,1/6,1/6)
+observed9 <- wins_decade$wins
+
+```
+
+* Step 1. State the hypothesis and identify the claim:
+
+  + Null Hypothesis ($H_0$): There is no difference in the number of wins by decade
+  + Alternative Hypothesis ($H_1$): There is a difference in the number of wins by decade
+
+* Step 2-3. Find the critical values and compute the test values:
+
+At $\alpha$ = 0.05 and degree of freedom = 5, the critical value is 11.07 based on the Chi-Square distribution table. We begin performing the chi-square test:
+```{r message=FALSE, warning=FALSE}
+# Conduct chi-square test:
+test9 <- chisq.test(observed9, p=expected9, correct=F)
+test9
+```
+
+* Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+In this test, since the test p-value (``r format(test9$p.value,scientific=T)``) is smaller than $\alpha$ (``r alpha9``), we can reject the null hypothesis and conclude that there is significant difference in the number of wins by decade.
+
+### Task 9.2 (crop_data.csv)
+
+1. Import file into R
+```{r message=FALSE, warning=FALSE}
+df_crop <- read.csv("crop_data.csv")
+str(df_crop)
+
+```
+
+2. Conduct the two-way ANOVA test
+```{r message=FALSE, warning=FALSE}
+df_crop$density <- as.factor(df_crop$density)
+df_crop$fertilizer <- as.factor(df_crop$fertilizer)
+
+table(df_crop$density, df_crop$fertilizer)
+```
+
+Step 1. State the hypothesis and identify the claim:
+
+  * The hypothesis for the interaction are ($F_{A\times B}$ test):
+    + Null Hypothesis ($H_0$): There is no interaction effect between type of density and fertilizer on the crop yield
+    + Alternative Hypothesis ($H_1$): There is an interaction effect between type of density and fertilizer on the crop yield
+  * The hypothesis for the density types are ($F_{A}$ test):
+    + Null Hypothesis ($H_0$): There is no difference between the means of crop yield for two types of density
+    + Alternative Hypothesis ($H_1$): There is a difference between the means of crop yield for two types of density
+  * The hypothesis for the fertilizer types are ($F_{B}$ test):
+    + Null Hypothesis ($H_0$): There is no difference between the means of crop yield for three types of fertilizer
+    + Alternative Hypothesis ($H_1$): There is a difference between the means of crop yield for three types of fertilizer
+
+Step 2-3. Find the critical values and compute the test values:
+
+There are 2 types of density and 3 types of fertilizer, and there are 16 data points in each group. Assume factor A and factor B represent the density types and fertilizer types, respectively. Thus, we have a=2, b=3 and n=16. From that, we can calculate d.f.D = ab(n-1) = 2*3(16-1) = 90. At alpha = 0.05, we can determine the critical values for each test:
+
+  * For the $F_{A}$ test: We have d.f.N = a-1 = 1, d.f.D = 90. Based on the F Distribution table, $F_{A}$ ~ 0
+  * For the $F_{B}$ test: We have d.f.N = b-1 = 2, d.f.D = 90. Based on the F Distribution table, $F_{B}$ ~ 0.05
+  * For the $F_{A\times B}$ test: We have d.f.N = (a-1)*(b-1) = 2, d.f.D = 90. Based on the F Distribution table, $F_{A\times B}$ ~ 0.05
+
+Step 4-5. Make the decision to accept/reject the null hypothesis and summarize the result
+
+```{r message=FALSE, warning=FALSE}
+# Conduct the two-way ANOVA test
+# F{A*B} test:
+f_ab2 <- aov(yield ~ density * fertilizer,data=df_crop)
+summary(f_ab2)
+
+```
+After conducting the $F_{A\times B}$ test, we can see that the p-value of density:fertilizer (0.5325) is greater than our significant level (0.05). Thus, we fail to reject the null hypothesis and conclude that there is no interaction effect between type of density and fertilizer on the crop yield.
+
+```{r message=FALSE, warning=FALSE}
+# Conduct the two-way ANOVA test
+# F{A} and F{B} test:
+f_ab_ind2 <- aov(yield ~ density + fertilizer,data=df_crop)
+summary(f_ab_ind2)
+
+```
+
+Since the interaction effect is insignificant, we can continue conducting the independent tests for $F_{A}$ and $F_{B}$. We see that the p-value for density (0.000174) is less than our alpha (0.05), and the p-value for fertilizer (0.000253) is also smaller than our alpha (0.05). Therefore, we can reject the null hypothesis for both the $F_{A}$ and $F_{B}$ tests and conclude that there is a difference between the means of crop yield for two types of density, and there is a difference between the means of crop yield for three types of fertilizer.
+
+# III. CONCLUSION SECTION
+
+This projects help to remind me how to properly conduct the Chi-square test as well as the ANOVA test for different purposes. In future projects, I hope to be able to apply this knowledge and perform the tests myself on other data sets.
+
+
+
