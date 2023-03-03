@@ -538,7 +538,7 @@ summary(f_ab_ind)
 
 Since the interaction effect is insignificant, we can continue conducting the independent tests for $F_{A}$ and $F_{B}$. We see that the p-value for Food_Supplement (0.0009) is less than our alpha (0.05), but the p-value for Grow_Light (0.094) is greater than our alpha (0.05). Therefore, we can reject the null hypothesis for the $F_{A}$ test but fail to reject the null hypothesis for the $F_{B}$ test. The conclusions are that there is a difference between the means of plant growth length for two types of food supplement, but there is no difference between the means of plant growth length for two types of grow light.
 
-## Task 9 (On your own)
+## Task 9 (Use sample data sets)
 
 ### Task 9.1 (baseball.csv)
 
