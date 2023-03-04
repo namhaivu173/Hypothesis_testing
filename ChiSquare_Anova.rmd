@@ -9,12 +9,17 @@ output:
     latex_engine: xelatex
   toc: true
   toc_depth: 2
+  number_section: true
 indent: true
 header-includes:
   - \usepackage{indentfirst}
   - \usepackage{ragged2e}
   - \usepackage[labelformat=empty]{caption}
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+  - \usepackage[fontsize=12.5pt]{scrextend}
 ---
+\pagenumbering{gobble}
 
 ```{r message=FALSE, warning=FALSE}
 # Libraries import
@@ -32,6 +37,18 @@ library(ggpubr)
 library(psych)
 
 ```
+
+\newpage
+\pagenumbering{arabic}  
+\thispagestyle{plain}
+\mbox{}
+
+\setcounter{tocdepth}{3}
+\renewcommand{\contentsname}{TABLE OF CONTENTS}
+
+\tableofcontents
+
+\newpage
 
 # I. INTRODUCTION SECTION
 
