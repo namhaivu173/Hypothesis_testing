@@ -73,7 +73,7 @@ This project aims to enhance my understanding of different nonparametric statist
 
 ## Task 1: Game attendance
 
-Game Attendance An athletic director suggests the median number for the paid attendance at 20 local football games is 3000. The data for a random sample are shown. At α = 0.05, is there enough evidence to reject the claim? If you were printing the programs for the games, would you use this figure as a guide?
+Game Attendance An athletic director suggests the median number for the paid attendance at 20 local football games is 3000. The data for a random sample are shown. At $\alpha$ = 0.05, is there enough evidence to reject the claim? If you were printing the programs for the games, would you use this figure as a guide?
 
 ```{r}
 # Input test values
@@ -115,7 +115,7 @@ Since the p-value is 1, which is greater than our significant level of 0.05, we 
 
 ## Task 2: Lottery Ticket Sales
 
-A lottery outlet owner hypothesizes that she sells 200 lottery tickets a day. She randomly sampled 40 days and found that on 15 days she sold fewer than 200 tickets. At α = 0.05, is there sufficient evidence to conclude that the median is below 200 tickets?
+A lottery outlet owner hypothesizes that she sells 200 lottery tickets a day. She randomly sampled 40 days and found that on 15 days she sold fewer than 200 tickets. At $\alpha$ = 0.05, is there sufficient evidence to conclude that the median is below 200 tickets?
 
 ```{r}
 # Input test values
@@ -141,7 +141,7 @@ Since the p-value is ``r test2$p.value``, which is greater than our significant 
 
 ## Task 3: Lengths of Prison Sentences
 
-A random sample of men and women in prison was asked to give the length of sentence each received for a certain type of crime. At α = 0.05, test the claim that there is no difference in the sentence received by each gender. The data (in months) are shown here:
+A random sample of men and women in prison was asked to give the length of sentence each received for a certain type of crime. At $\alpha$ = 0.05, test the claim that there is no difference in the sentence received by each gender. The data (in months) are shown here:
 
 ```{r}
 # Input test values
@@ -177,7 +177,7 @@ Since the test p-value is ``r test3$p.value``, which is greater than our signifi
 
 ## Task 4: Winning Baseball Games
 
-For the years 1970–1993 the National League (NL) and the American League (AL) (major league baseball) were each divided into two divisions: East and West. Below are random samples of the number of games won by each league’s Eastern Division. At α = 0.05, is there sufficient evidence to conclude a difference in the number of wins?
+For the years 1970–1993 the National League (NL) and the American League (AL) (major league baseball) were each divided into two divisions: East and West. Below are random samples of the number of games won by each league’s Eastern Division. At $\alpha$ = 0.05, is there sufficient evidence to conclude a difference in the number of wins?
 
 ```{r}
 # Input test values
@@ -232,7 +232,7 @@ Determine whether the following null hypotheses should be rejected:
 
 ## Task 6: Mathematics Literacy Scores
 
-Through the Organization for Economic Cooperation and Development (OECD), 15-year-olds are tested in member countries in mathematics, reading, and science literacy. Listed are randomly selected total mathematics literacy scores (i.e., both genders) for selected countries in different parts of the world. Test, using the Kruskal-Wallis test, to see if there is a difference in means at α = 0.05.
+Through the Organization for Economic Cooperation and Development (OECD), 15-year-olds are tested in member countries in mathematics, reading, and science literacy. Listed are randomly selected total mathematics literacy scores (i.e., both genders) for selected countries in different parts of the world. Test, using the Kruskal-Wallis test, to see if there is a difference in means at $\alpha$ = 0.05.
 
 ```{r}
 # Input data values
@@ -269,7 +269,7 @@ Since the test p-value is ``r test6$p.value``, which is greater than our signifi
 
 ## Task 7: Subway and Commuter Rail Passengers
 
-Six cities are randomly selected, and the number of daily passenger trips (in thousands) for subways and commuter rail service is obtained. At α = 0.05, is there a relationship between the variables? Suggest one reason why the transportation authority might use the results of this study.
+Six cities are randomly selected, and the number of daily passenger trips (in thousands) for subways and commuter rail service is obtained. At $\alpha$ = 0.05, is there a relationship between the variables? Suggest one reason why the transportation authority might use the results of this study.
 
 ```{r}
 # Input data values
