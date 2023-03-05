@@ -1,0 +1,395 @@
+---
+title: |
+  <center> Hypothesis Testing 2 </center>  
+  <center> Nonparametric methods </center>
+author: "Hai Vu"
+date: '`r format(Sys.time(),"%d %B, %Y")`'
+output: 
+  pdf_document:
+    latex_engine: xelatex
+  toc: true
+  toc_depth: 2
+  number_section: true
+indent: true
+header-includes:
+  - \usepackage{indentfirst}
+  - \usepackage{ragged2e}
+  - \usepackage[labelformat=empty]{caption}
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+  - \usepackage[fontsize=12.5pt]{scrextend}
+---
+\pagenumbering{gobble}
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE, tidy.opts = list(width.cutoff = 80), tidy = TRUE)
+knitr::opts_chunk$set(echo = T, tidy = F, message=F, warning=F, fig.align="center", linewidth=75)
+
+```
+```{r message=FALSE, warning=FALSE, results = FALSE, include=FALSE}
+# Libraries installation
+
+install_load_package <- function(pkg){
+new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE, quiet = TRUE)
+    sapply(pkg, suppressPackageStartupMessages(require), character.only = TRUE)
+}
+
+list.of.packages <- c("ggplot2", "pls", "glmnet", "Matrix", "smbinning", "ROCR",
+                      "RCurl", "curl", "httr", "InformationValue", "car", "caTools",
+                      "smbinning", "ISLR", "plyr", "Matrix", "knitr", "dplyr",
+                      "tidyverse", "tibble", "RColorBrewer", "kableExtra",
+                      "formatR", "DescTools", "ggpubr", "psych", "caret",
+                      "Information", "MASS", "BSDA", "nonpar")
+
+#install_load_package(list.of.packages)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+library(BSDA)
+library(nonpar)
+
+```
+
+\newpage
+\pagenumbering{arabic}  
+\thispagestyle{plain}
+\mbox{}
+
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{TABLE OF CONTENTS}
+
+\tableofcontents
+
+\newpage
+
+# I. INTRODUCTION
+
+This project aims to enhance my understanding of different nonparametric statistical methods, and how to apply these methods to approach various sorts of problems. The nonparametric test refer to statistical method that does not make any assumptions about the parameters of the population distribution from which the sample is drawn. The tests to be conducted in this project include the Sign Test, the Wilcoxon Rank Sum Test, the Wilcoxon Signed-Rank Test, the Kruskal-Wallis Test and the Spearman Rank Correlation Coefficient. In addition, I will also practice constructing a random number simulation to solve the given problems. All of these exercises will hopefully provide me with thorough understanding of the advantages and disadvantages of the mentioned nonparametric methods.
+
+# II. ANALYSIS
+
+## Task 1: Game attendance
+
+Game Attendance An athletic director suggests the median number for the paid attendance at 20 local football games is 3000. The data for a random sample are shown. At α = 0.05, is there enough evidence to reject the claim? If you were printing the programs for the games, would you use this figure as a guide?
+
+```{r}
+# Input test values
+attendents <- c(6210,3150,2700,3012,4875,
+                3540,6127,2581,2642,2573,
+                2792,2800,2500,3700,6030,
+                5437,2758,3490,2851,2720)
+alpha1 <- 0.05
+med1 <- 3000
+
+pos_attend <- sum(attendents > med1)
+neg_attend <- sum(attendents < med1)
+
+n1 <- pos_attend + neg_attend
+min_sign1 <- min(pos_attend,neg_attend)
+
+df_test1 <- matrix(attendents,ncol=4)
+knitr::kable(df_test1, "simple",
+             caption="Table 1.1. Paid attendance at 20 local games") %>%
+  kable_styling(position = "center")
+```
+
+For this sign test, our hypotheses are as follow:
+
+  + Null Hypothesis ($H_0$): ${Median=3000}$  
+  + Alternative Hypothesis ($H_1$): ${Median\neq3000}$, or that the median paid attendance is not equal to 3000
+
+```{r}
+# Conduct the sign test
+SIGN.test(attendents, md=med1, conf.level=1-alpha1)
+binom.test(min_sign1, n1, conf.level=1-alpha1)
+```
+```{r, include=F}
+# SignTest(attendents, mu=3000, conf.level=1-alpha1)
+# signtest(attendents, m=3000, conf.level=1-alpha1, exact=F)
+```
+
+Since the p-value is 1, which is greater than our significant level of 0.05, we fail to reject the null hypothesis and conclude that there is not enough evidence to show that the population median is different than 3000 at a significance level of 0.05.
+
+## Task 2: Lottery Ticket Sales
+
+A lottery outlet owner hypothesizes that she sells 200 lottery tickets a day. She randomly sampled 40 days and found that on 15 days she sold fewer than 200 tickets. At α = 0.05, is there sufficient evidence to conclude that the median is below 200 tickets?
+
+```{r}
+# Input test values
+alpha2 <- 0.05
+med2 <- 200
+n2 <- 40
+min_sign2 <- 15
+
+```
+
+For this sign test, our hypotheses are as follow:
+
+  + Null Hypothesis ($H_0$): ${Median=200}$  
+  + Alternative Hypothesis ($H_1$): ${Median<200}$, or that the median lottery tickets sales is lower than 200
+  
+```{r}
+# Conduct the sign test
+test2 <- binom.test(min_sign2,n2,alternative = "less",conf.level=1-alpha2)
+test2
+```
+
+Since the p-value is ``r test2$p.value``, which is greater than our significant level of 0.05, we fail to reject the null hypothesis and conclude that there is not enough evidence to show that the population median is lower than 200 at a significance level of  0.05.
+
+## Task 3: Lengths of Prison Sentences
+
+A random sample of men and women in prison was asked to give the length of sentence each received for a certain type of crime. At α = 0.05, test the claim that there is no difference in the sentence received by each gender. The data (in months) are shown here:
+
+```{r}
+# Input test values
+males <- c(8,12,6,14,22,27,32,24,26,19,15,13)
+females <- c(7,5,2,3,21,26,30,9,4,17,23,12,11,16)
+
+df_test3 <- matrix(c(rep("Male",12),rep("Female",14),
+                     males,females),ncol=2)
+colnames(df_test3) <- c("Gender","Sentence")
+df_test3 <- as.data.frame(df_test3)
+
+df_test3$Sentence <- as.numeric(df_test3$Sentence)
+df_test3$Gender <- as.factor(df_test3$Gender)
+
+knitr::kable(df_test3, "simple",
+             caption="Table 3.1. Length of prison sentences (in months)") %>%
+  kable_styling(position = "center")
+
+```
+
+For this Wilcoxon Rank Sum test, our hypotheses are as follow:
+
+  + Null Hypothesis ($H_0$): There is no difference in length of prison sentences between genders  
+  + Alternative Hypothesis ($H_1$): There is a difference in length of prison sentences between genders  
+  
+```{r}
+# Conduct the test
+test3 <- wilcox.test(Sentence ~ Gender, data=df_test3)
+test3
+```
+
+Since the test p-value is ``r test3$p.value``, which is greater than our significant level of 0.05, we fail to reject to null hypothesis and state that there is no difference in length of prison sentences between genders.
+
+## Task 4: Winning Baseball Games
+
+For the years 1970–1993 the National League (NL) and the American League (AL) (major league baseball) were each divided into two divisions: East and West. Below are random samples of the number of games won by each league’s Eastern Division. At α = 0.05, is there sufficient evidence to conclude a difference in the number of wins?
+
+```{r}
+# Input test values
+nl <- c(89,96,88,101,90,91,92,96,108,100,95)
+al <- c(108,86,91,97,100,102,95,104,95,89,88,101)
+
+df_test4 <- matrix(c(rep("NL",11),rep("AL",12),
+                     nl,al),ncol=2)
+colnames(df_test4) <- c("Leagues","Wins")
+df_test4 <- as.data.frame(df_test4)
+
+df_test4$Wins <- as.numeric(df_test4$Wins)
+df_test4$Leagues <- as.factor(df_test4$Leagues)
+
+knitr::kable(df_test4, "simple",
+             caption="Table 4.1. Total Games Won by the Eastern Division teams") %>%
+  kable_styling(position = "center")
+
+
+```
+
+For this Wilcoxon Rank Sum test, our hypotheses are as follow:
+
+  + Null Hypothesis ($H_0$): There is no difference in the number of games won by the Eastern Division between leagues
+  + Alternative Hypothesis ($H_1$): There is a difference in the number of games won by the Eastern Division between leagues
+
+```{r}
+# Conduct the test
+test4 <- wilcox.test(Wins ~ Leagues, data=df_test4)
+test4
+
+```
+
+Since the test p-value is ``r test4$p.value``, which is greater than our significant level of 0.05, we fail to reject to null hypothesis and state that there is no difference in the number of games won by the Eastern Division between leagues.
+
+## Task 5: The Wilcoxon Signed-Rank test
+
+Determine whether the following null hypotheses should be rejected:
+
+1. ws = 13, n = 15, alpha = 0.01, two-tailed
+  + Looking at the Critical Values table for the Wilcoxon Signed-Rank test, we can see that with n = 15 and alpha = 0.01, the critical value for a two-tailed test is 16.
+  + Since our test value ws = 13 is less than the critical value of 16, we are able to reject the null hypothesis. 
+2. ws = 32, n = 28, alpha = 0.025, one-tailed
+  + Looking at the Critical Values table for the Wilcoxon Signed-Rank test, we can see that with n = 28 and alpha = 0.025, the critical value for a one-tailed test is 117.
+  + Since our test value ws = 32 is less than the critical value of 117, we are able to reject the null hypothesis. 
+3. ws = 65, n = 20, alpha = 0.05, one-tailed
+  + Looking at the Critical Values table for the Wilcoxon Signed-Rank test, we can see that with n = 20 and alpha = 0.05, the critical value for a one-tailed test is 60.
+  + Since our test value ws = 65 is greater than the critical value of 60, we fail to reject the null hypothesis. 
+4. ws = 22, n = 14, alpha = 0.10, two-tailed
+  + Looking at the Critical Values table for the Wilcoxon Signed-Rank test, we can see that with n = 14 and alpha = 0.10, the critical value for a two-tailed test is 26.
+  + Since our test value ws = 22 is less than the critical value of 26, we are able to reject the null hypothesis. 
+
+## Task 6: Mathematics Literacy Scores
+
+Through the Organization for Economic Cooperation and Development (OECD), 15-year-olds are tested in member countries in mathematics, reading, and science literacy. Listed are randomly selected total mathematics literacy scores (i.e., both genders) for selected countries in different parts of the world. Test, using the Kruskal-Wallis test, to see if there is a difference in means at α = 0.05.
+
+```{r}
+# Input data values
+wests <- c(527,406,474,381,411)
+eu <- c(520,510,513,548,496)
+asia <- c(523,547,547,391,549)
+
+df_test6 <- matrix(c(rep("Western",5),rep("Europe",5),rep("Eastern Asia",5),
+                     wests,eu,asia),ncol=2)
+colnames(df_test6) <- c("Location","Score")
+df_test6 <- as.data.frame(df_test6)
+
+df_test6$Score <- as.numeric(df_test6$Score)
+df_test6$Location <- as.factor(df_test6$Location )
+
+knitr::kable(df_test6, "simple",
+             caption="Table 6.1. Literacy math scores of 15-year-olds 
+             in member countries") %>%
+  kable_styling(position = "center")
+```
+
+For this Kruskal-Wallis test, our hypotheses are as follow:
+
+  + Null Hypothesis ($H_0$): There is no difference in the mathematics literacy scores between 15-year-olds in the three parts of the world
+  + Alternative Hypothesis ($H_1$): There is a difference in the mathematics literacy scores between 15-year-olds in the three parts of the world
+
+```{r}
+# Conduct the test
+test6 <- kruskal.test(Score ~ Location, data = df_test6)
+test6
+```
+
+Since the test p-value is ``r test6$p.value``, which is greater than our significant level of 0.05, we fail to reject to null hypothesis and state that there is no difference in the mathematics literacy scores between 15-year-olds in the three parts of the world.
+
+## Task 7: Subway and Commuter Rail Passengers
+
+Six cities are randomly selected, and the number of daily passenger trips (in thousands) for subways and commuter rail service is obtained. At α = 0.05, is there a relationship between the variables? Suggest one reason why the transportation authority might use the results of this study.
+
+```{r}
+# Input data values
+subw <- c(845,494,425,313,108,41)
+rail <- c(39,291,142,103,33,38)
+city <- c(1:6)
+
+df_test7 <- matrix(c(city,subw,rail),ncol=3)
+colnames(df_test7) <- c("City","Subway","Rail")
+df_test7 <- as.data.frame(df_test7)
+
+knitr::kable(df_test7, "simple",
+             caption="Table 7.1. Number of daily passenger trips (in thousands) 
+             for each transportation mode") %>%
+  kable_styling(position = "center")
+```
+
+Step 1: For this Spearman rank correlation coefficient test, our hypotheses are as follow:
+
+  + Null Hypothesis ($H_0$): There is no significant linear correlation between the number of subway trips and the number of rail trips taken by passengers
+  + Alternative Hypothesis ($H_1$): There is a significant linear correlation between the number of subway trips and the number of rail trips taken by passengers
+  
+Step 2-3: Find the Spearman rank correlation coefficient and the critical value
+```{r}
+# Conduct the test
+test7 <- cor.test(x=df_test7$Subway, y=df_test7$Rail, method = 'spearman')
+test7
+
+```
+
+  + Based on the Critical Values table for the Rank Correlation Coefficient, we can see that with n = 6 and alpha = 0.05, the critical value is 0.886
+  + From the test conducted above, we can also see that the Spearman correlation coefficient is ``r test7$estimate`` and the test p-value is ``r test7$p.value``
+
+Step 4-5: Make the decision and summarize the result
+
+Since the test p-value (``r test7$p.value``) is greater than our significant level of 0.05, or that the Spearman correlation coefficient (``r test7$estimate``) is less than the test critical value of 0.886, we fail to reject the null hypothesis and conclude that there is no significant linear correlation between the number of subway trips and the number of rail trips taken by passengers.
+
+## Task 8: Prizes in Caramel Corn Boxes
+
+A caramel corn company gives four different prizes, one in each box. They are placed in the boxes at random. Find the average number of boxes a person needs to buy to get all four prizes.
+
+```{r}
+num_trial <- 40
+sample_names <- data.frame(matrix(ncol=num_trial,nrow=num_trial))
+sample_results <- data.frame(matrix(ncol=1,nrow=num_trial))
+
+for(i in 1:num_trial){
+  sample_names[,i] <- sample(4, num_trial, replace = TRUE)
+  sample_results[i,] <- max(match(1,sample_names[,i]),
+                            match(2,sample_names[,i]),
+                            match(3,sample_names[,i]),
+                            match(4,sample_names[,i]))
+}
+
+test8 <- mean(as.matrix(sample_results))
+test8
+```
+
+The average number of boxes a person needs to buy to get all four prizes is ``r round(mean(as.matrix(sample_results)),1)`` boxes.
+
+```{r}
+# Distribution of results
+par(mai=c(1,1,1,1))
+boxplot(sample_results[,1],col="pink",
+        main="Figure 8.1. Number of boxes a person needs
+        to buy to get all four prizes",
+        ylab="Number of Boxes")
+points(mean(as.matrix(sample_results)),pch=16,col="red")
+```
+
+As you can see from the simulation above, the average and the median number of boxes one need to buy to win all 4 prizes are ``r round(mean(as.matrix(sample_results)),1)`` and ``r round(median(as.matrix(sample_results)),1)`` boxes, respectively.
+
+## Task 9: Lottery Winners
+
+To win a certain lotto, a person must spell the word "big". Sixty percent of the tickets contain the letter "b", 30% contain the letter "i", and 10% contain the letter "g". Find the average number of tickets a person must buy to win the prize.
+
+```{r}
+num_trial2 <- 30
+sample_names2 <- data.frame(matrix(nrow=100,ncol=num_trial2))
+sample_results2 <- data.frame(matrix(ncol=1,nrow=num_trial2))
+
+for(i in 1:num_trial2){
+  sample_names2[,i] <- sample(c("b", "i", "g"), size = 100, replace = TRUE, prob = c(0.6, 0.3, 0.1))
+  sample_results2[i,] <- max(match("b",sample_names2[,i]),
+                             match("i",sample_names2[,i]),
+                             match("g",sample_names2[,i]))
+}
+
+test9 <- mean(as.matrix(sample_results2))
+test9
+
+```
+
+The average number of tickets a person needs to buy to spell the word BIG is ``r round(mean(as.matrix(sample_results2)),1)`` tickets.
+
+```{r}
+# Distribution of results
+par(mai=c(1,1,1,1))
+boxplot(sample_results2[,1],col="lightblue",
+        main="Figure 9.1. Number of tickets a person needs
+        to buy to spell the word BIG",
+        ylab="Number of Tickets")
+points(mean(as.matrix(sample_results2)),pch=16,col="red")
+
+```
+
+As you can see from the simulation above, the average and the median number of tickets one needs to buy to win the lotto are ``r round(mean(as.matrix(sample_results2)),1)`` and ``r round(median(as.matrix(sample_results2)),1)`` tickets, respectively.
+
+# III. CONCLUSION
+
+In this project, I have learned of the differences between different nonparametric tests, as well as how to conduct them in a variety of scenarios. I also gained a lot of experience constructing simulations to make estimations and solve issues. In the future, I hope to incorporate all of these statistical methods and build more complicated simulating models so as to solve more advanced problems. It was very helpful to learn different methods of testing for similar problems, and how to compare the output of those tests in order to increase confidence in the test results.
+
+\newpage
+# IV. REFERENCES
+\setlength{\parindent}{-0.4in}
+\setlength{\leftskip}{0.4in}
+\setlength{\parskip}{8pt}
+\noindent
+
+Mangiafico, S. S. (2016). _Sign test for one-sample data._ R Handbook: Sign Test for One-sample Data. Retrieved February 14, 2022, from https://rcompanion.org/handbook/F_03.html 
+
+Bradburn, S. (2021, June 4). _How to perform a Spearman Correlation Test in R._ Top Tip Bio. Retrieved February 14, 2022, from https://toptipbio.com/spearman-correlation-r/ 
+
