@@ -9,15 +9,14 @@ Chi Square & ANOVA hypothesis tests
 <i><sub>(Image Source: https://www.investopedia.com/terms/h/hypothesistesting.asp)</sub></i>
 </p>
 
-
 ## I. Main goals:
 - Practice using different hypothesis testing methods, including both parametric and non-parametric types:
     - Chi Square and Analysis of Variance (ANOVA) tests
     - Sign test, the Wilcoxon Rank Sum test, the Wilcoxon Signed-Rank test, the Kruskal-Wallis test, and the Spearman Rank Correlation Coeffcient test
-- Create nice .pdf report using R Markdown
+- Create professional-looking .pdf reports using R Markdown
 
 ## II. Tests conducted:
-### Part 1: Parametric tests
+### Part 1: Parametric tests <b>(See the Parametric tests here [![PDF](https://img.shields.io/badge/click%20to%20open-PDF-darkred)](https://github.com/namhaivu173/Hypothesis_testing/blob/main/ChiSquare_Anova.pdf))<br></b>
 1. <b>Test the goodness of fit of a distribution using Chi-square:</b> used to determine whether an observed set of data fits a particular theoretical distribution, such as the normal distribution or the Poisson distribution
 
 2. <b>Test two variables for independence using Chi-square:</b> used to determine whether two categorical variables are independent of each other, often employed to analyze contingency tables
@@ -28,7 +27,7 @@ Chi Square & ANOVA hypothesis tests
 
 5. <b>Two-way ANOVA:</b> used to determine whether there is a significant difference in the means of two or more groups, while taking into account two categorical independent variables that may influence the dependent variable
 
-### Part 2: Non-parametric tests
+### Part 2: Non-parametric tests <b>(See the Non-parametric tests here [![PDF](https://img.shields.io/badge/click%20to%20open-PDF-darkred)](https://github.com/namhaivu173/Hypothesis_testing/blob/main/Nonparametric_tests.pdf))<br></b>
 1. <b>Sign Test:</b> used to compare the median of two paired groups or to test if a single sample median is equal to a known value
 
 2. <b>Wilcoxon Rank Sum Test:</b> also known as the Mann-Whitney U test, is used to compare the median values of two independent samples and it is an alternative to the two-sample t-test when t-test's assumption is not met
